@@ -1,108 +1,118 @@
 import json
-import os
+from datetime import datetime
 
-FILE_NAME = "expenses.json"
+FILE_NAME = "data.json"
 
-# Load expenses from file
-def load_expenses():
-    if os.path.exists(FILE_NAME):
+
+# Load data
+def load_data():
+    try:
         with open(FILE_NAME, "r") as file:
             return json.load(file)
-    return []
+    except:
+        return []
 
-# Save expenses to file
-def save_expenses(expenses):
+
+# Save data
+def save_data(expenses):
     with open(FILE_NAME, "w") as file:
         json.dump(expenses, file, indent=4)
 
+
 # Add expense
 def add_expense(expenses):
-    try:
-        amount = float(input("Enter amount: ₹"))
-        category = input("Enter category (Food, Travel, Shopping, etc.): ")
-        description = input("Enter description: ")
+    amount = float(input("Enter amount: "))
+    category = input("Enter category: ")
 
-        expense = {
-            "amount": amount,
-            "category": category,
-            "description": description
-        }
+    expense = {
+        "amount": amount,
+        "category": category,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
 
-        expenses.append(expense)
-        save_expenses(expenses)
+    expenses.append(expense)
+    save_data(expenses)
+    print("Expense added successfully!")
 
-        print("\nExpense added successfully!\n")
-
-    except ValueError:
-        print("Invalid amount entered.")
 
 # View expenses
 def view_expenses(expenses):
     if not expenses:
-        print("\nNo expenses recorded.\n")
+        print("No expenses found.")
         return
 
-    print("\n------ Expense List ------")
-    for i, expense in enumerate(expenses, start=1):
-        print(
-            f"{i}. ₹{expense['amount']} | "
-            f"{expense['category']} | "
-            f"{expense['description']}"
-        )
+    print("\n===== ALL EXPENSES =====")
+    for i, exp in enumerate(expenses, start=1):
+        print(f"{i}. Amount: {exp['amount']} | Category: {exp['category']} | Date: {exp['date']}")
+
+    print(f"\nTotal Spent: {calculate_total(expenses)}")
+
+
+# Delete expense
+def delete_expense(expenses):
+    view_expenses(expenses)
+
+    if not expenses:
+        return
+
+    try:
+        index = int(input("\nEnter expense number to delete: "))
+        if 1 <= index <= len(expenses):
+            removed = expenses.pop(index - 1)
+            save_data(expenses)
+            print(f"Deleted expense: {removed}")
+        else:
+            print("Invalid number")
+    except:
+        print("Invalid input")
+
 
 # Total spending
-def total_spending(expenses):
-    total = sum(expense["amount"] for expense in expenses)
-    print(f"\nTotal Spending: ₹{total:.2f}\n")
+def calculate_total(expenses):
+    return sum(exp["amount"] for exp in expenses)
+
 
 # Category summary
 def category_summary(expenses):
     summary = {}
 
-    for expense in expenses:
-        category = expense["category"]
+    for exp in expenses:
+        cat = exp["category"]
+        summary[cat] = summary.get(cat, 0) + exp["amount"]
 
-        if category in summary:
-            summary[category] += expense["amount"]
-        else:
-            summary[category] = expense["amount"]
+    print("\n===== CATEGORY SUMMARY =====")
+    for cat, total in summary.items():
+        print(f"{cat}: {total}")
 
-    print("\n------ Category Summary ------")
-    for category, amount in summary.items():
-        print(f"{category}: ₹{amount:.2f}")
 
-# Main menu
+# Menu
 def main():
-    expenses = load_expenses()
+    expenses = load_data()
 
     while True:
-        print("\n===== Expense Tracker =====")
+        print("\n===== EXPENSE TRACKER =====")
         print("1. Add Expense")
         print("2. View Expenses")
-        print("3. View Total Spending")
+        print("3. Delete Expense")
         print("4. Category Summary")
         print("5. Exit")
 
-        choice = input("Enter your choice: ")
+        choice = input("Enter choice: ")
 
         if choice == "1":
             add_expense(expenses)
-
         elif choice == "2":
             view_expenses(expenses)
-
         elif choice == "3":
-            total_spending(expenses)
-
+            delete_expense(expenses)
         elif choice == "4":
             category_summary(expenses)
-
         elif choice == "5":
-            print("Thank you for using Expense Tracker!")
+            print("Goodbye!")
             break
-
         else:
-            print("Invalid choice. Try again.")
+            print("Invalid choice")
+
 
 if __name__ == "__main__":
     main()
